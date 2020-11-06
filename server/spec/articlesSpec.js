@@ -68,7 +68,6 @@ describe("Articles Tets Suite", () => {
 
       expect(articlesFromDB.length).toBe(1);
       expect(articlesFromDB[0]).toContain(articleParam);
-      done();
     });
   });
 
@@ -86,7 +85,6 @@ describe("Articles Tets Suite", () => {
 
       expect(article.includes(randomId)).toBe(true);
       expect(articlesFromDB.length).toBe(0);
-      done();
     });
   });
 
@@ -99,7 +97,7 @@ describe("Articles Tets Suite", () => {
         body: {
           data: { article: articles },
         },
-      } = request(app).get(route).expect(200);
+      } = request(app).get(routeWithQueryParams).expect(200);
 
       expect(article.length).toBe(2);
       articlesToInsert.forEach((art) => {
@@ -109,8 +107,35 @@ describe("Articles Tets Suite", () => {
           )
         ).toContain(art);
       });
+    });
 
-      done();
+    it("should get one Article because tag 'new' (200)", async () => {
+      const articlesToInsert = [articleSaved, articleToSave];
+      await this.articles.insertMany(articlesToInsert);
+      const routeWithQueryParams = `${route}?tags=new`;
+
+      const {
+        body: {
+          data: { article: articles },
+        },
+      } = request(app).get(routeWithQueryParams).expect(200);
+
+      expect(article.length).toBe(1);
+      expect(articles).toContain(articlesToInsert[0]);
+    });
+
+    it("should not get an article because tag 'no exists' (200)", async () => {
+      const articlesToInsert = [articleSaved, articleToSave];
+      await this.articles.insertMany(articlesToInsert);
+      const routeWithQueryParams = encodeURI(`${route}?tags=no exists`);
+
+      const {
+        body: {
+          data: { article: articles },
+        },
+      } = request(app).get(routeWithQueryParams).expect(200);
+
+      expect(articles.length).toBe(0);
     });
   });
 });
