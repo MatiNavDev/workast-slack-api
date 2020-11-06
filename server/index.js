@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
-const DBInstance = require("./db");
+const { initDb } = require("./db/helpers");
 const userRoutes = require("./routes/user");
 const articleRoutes = require("./routes/article");
 
@@ -23,7 +23,7 @@ app.use(`${routeInitialText}/articles`, articleRoutes);
 const PORT = process.env.PORT || 3007;
 
 const init = async () => {
-  await DBInstance.init();
+  await initDb();
   app.listen(PORT, () =>
     console.log(`Workast project running in port: ${PORT}`)
   );
