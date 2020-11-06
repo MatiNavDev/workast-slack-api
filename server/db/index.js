@@ -1,14 +1,21 @@
-const { promisify } = require('util')
-const { mongo: { url, database }} = require('../../config')
-const { MongoClient } = require('mongodb')
-MongoClient.connect = promisify(MongoClient.connect)
+require("dotenv").config();
+
+const { promisify } = require("util");
+const { MongoClient } = require("mongodb");
+
+const {
+  mongo: { url, database },
+} = require(`../../config/config.${process.env.NODE_ENV}`);
+
+MongoClient.connect = promisify(MongoClient.connect);
 
 class DBInstance {
-  async init () {
-    const client = await new MongoClient(url, { useNewUrlParser: true }).connect()
-    this.db = client.db(database)
+  async init() {
+    const client = await new MongoClient(url, {
+      useNewUrlParser: true,
+    }).connect();
+    this.db = client.db(database);
   }
 }
 
-
-module.exports = new DBInstance()
+module.exports = new DBInstance();
