@@ -15,7 +15,7 @@ class DBInstance {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     }).connect();
-    this.db = client.db(database);
+    this.db = this.db ? this.db : client.db(database);
   }
 }
 
