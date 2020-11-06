@@ -135,7 +135,7 @@ describe("Articles Tets Suite", () => {
       expect(articleParam.name).toBe(articleChangedName);
     });
 
-    it("should fail because no article sent (422)", async () => {
+    it("should fail because no data sent (422)", async () => {
       const {
         body: { message },
       } = await request(app).put(`${route}/${randomId}`).expect(422);
