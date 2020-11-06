@@ -1,4 +1,5 @@
 module.exports = {
-  User: require("./users"),
+  Article: require("./articles"),
   DBInstance: require("./dbInstance"),
+  User: require("./users"),
 };

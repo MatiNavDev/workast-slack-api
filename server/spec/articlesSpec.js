@@ -1,9 +1,15 @@
 const request = require("supertest");
 
+const { Article } = require("../db/classes");
 const { app, routeInitialText } = require("../index");
+const {
+  NO_ARTICLE_SENT,
+  CREATE_ARTICLE_WRONG_PROPERTY,
+} = require("../constansts/responsesMessages/article");
 
 const route = `${routeInitialText}/articles`;
 const randomId = "someRandomId";
+
 const articleToSave = {
   userId: "userId",
   title: "title",
@@ -20,26 +26,34 @@ const articleSaved = {
 
 describe("Articles Tets Suite", () => {
   beforeAll(async () => {
-    await DBInstance.init();
-    this.articles = DBInstance.db.collection("articles");
+    await Article.init();
   });
 
   beforeEach(async () => {
-    this.articles.deleteMany({});
+    await Article.articles.deleteMany({});
   });
 
-  describe("(POST) Create Article Tests Suite: /articles", () => {
+  afterAll(async () => {
+    await Article.articles.deleteMany({});
+  });
+
+  describe("(POST) Create Article Tests Suite: ", () => {
     it("should create an Article successfully (200)", async () => {
       const {
         body: {
           data: { article: articleParam },
         },
-      } = request(app).post(route).send(articleToSave).expect(200);
+      } = await request(app)
+        .post(route)
+        .send({ article: articleToSave })
+        .expect(200);
 
-      const articlesFromDB = await this.articles.find({}).toArray();
-
+      const articlesFromDB = await Article.articles.find({}).toArray();
       expect(articlesFromDB.length).toBe(1);
-      expect(articlesFromDB[0]).toContain(articleParam);
+      expect(articlesFromDB[0]._id.toString()).toBe(articleParam._id);
+      expect(articlesFromDB[0]).toEqual(
+        jasmine.objectContaining(articleToSave)
+      );
     });
 
     it("should fail because no article sent", () => {

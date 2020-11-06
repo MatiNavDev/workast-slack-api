@@ -5,7 +5,7 @@ const { app, routeInitialText } = require("../index");
 const {
   NO_USER_SENT,
   CREATE_USER_WRONG_PROPERTY,
-} = require("../constansts/responseMessages");
+} = require("../constansts/responsesMessages/user");
 
 const route = `${routeInitialText}/users`;
 const userToSave = {
@@ -40,7 +40,7 @@ describe("Users Tets Suite", () => {
       expect(usersFromDB[0]._id.toString()).toBe(userParam._id);
     });
 
-    it("should fail because no user sent", async () => {
+    it("should fail because no user sent (422)", async () => {
       const {
         body: { message },
       } = await request(app).post(route).expect(422);
@@ -48,7 +48,7 @@ describe("Users Tets Suite", () => {
       expect(message).toBe(NO_USER_SENT);
     });
 
-    it("should fail because missing property", async () => {
+    it("should fail because missing property (422)", async () => {
       const {
         body: { message },
       } = await request(app)

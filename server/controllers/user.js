@@ -6,7 +6,7 @@ const {
 const {
   NO_USER_SENT,
   CREATE_USER_WRONG_PROPERTY,
-} = require("../constansts/responseMessages");
+} = require("../constansts/responsesMessages/user");
 
 /**
  * Creates a new user
