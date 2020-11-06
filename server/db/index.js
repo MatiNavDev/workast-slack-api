@@ -13,6 +13,7 @@ class DBInstance {
   async init() {
     const client = await new MongoClient(url, {
       useNewUrlParser: true,
+      useUnifiedTopology: true,
     }).connect();
     this.db = client.db(database);
   }
