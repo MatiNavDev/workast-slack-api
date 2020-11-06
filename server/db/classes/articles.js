@@ -30,6 +30,13 @@ class Articles {
 
     return articleEdited;
   }
+
+  async deleteOne({ id }) {
+    const { value: articleDeleted } = await this.articles.findOneAndDelete({
+      _id: id,
+    });
+    return articleDeleted;
+  }
 }
 
 module.exports = new Articles();

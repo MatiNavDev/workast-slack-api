@@ -89,7 +89,17 @@ const editOne = async ({ params: { id }, body: { article } }, res) => {
  */
 const deleteOne = async ({ params: { id } }, res) => {
   try {
-    handleCommonResponse(res, { article: `deleteOne success, id: ${id}` });
+    const articleDeleted = await Article.deleteOne({
+      id: getObjectId(id),
+    });
+
+    if (!articleDeleted)
+      return handleCommonError(res, {
+        message: ARTICLE_ID_NOT_FOUND,
+        status: 404,
+      });
+
+    handleCommonResponse(res, { article: articleDeleted });
   } catch (error) {
     handleCommonError(res, error);
   }

@@ -118,7 +118,7 @@ describe("Articles Tets Suite", () => {
       const articleChangedTitle = "articleChanged";
       const {
         ops: [articleSavedInDB],
-      } = await Article.articles.insertOne(articleSaved);
+      } = await Article.articles.insertOne({ ...articleSaved });
 
       const {
         body: {
@@ -171,16 +171,19 @@ describe("Articles Tets Suite", () => {
 
   describe("(DELETE) Delete Article Tests Suite", () => {
     it("should delete an Article successfully (200)", async () => {
-      await Article.articles.insertOne(articleSaved);
+      const {
+        ops: [articleSavedInDB],
+      } = await Article.articles.insertOne({ ...articleSaved });
 
       const {
         body: {
-          data: { articleParam },
+          data: { article: articleParam },
         },
-      } = request(app).delete(`${route}/${randomId}`).expect(200);
+      } = await request(app)
+        .delete(`${route}/${articleSavedInDB._id}`)
+        .expect(200);
 
       const articlesFromDB = await Article.articles.find({}).toArray();
-
       expect(articleParam).toEqual(jasmine.objectContaining(articleSaved));
       expect(articlesFromDB.length).toBe(0);
     });
