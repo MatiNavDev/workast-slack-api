@@ -37,7 +37,7 @@ describe("Articles Tets Suite", () => {
     await Article.articles.deleteMany({});
   });
 
-  describe("(POST) Create Article Tests Suite: ", () => {
+  describe("(POST) Create Article Tests Suite ", () => {
     it("should create an Article successfully (200)", async () => {
       const {
         body: {
@@ -49,6 +49,7 @@ describe("Articles Tets Suite", () => {
         .expect(200);
 
       const articlesFromDB = await Article.articles.find({}).toArray();
+
       expect(articlesFromDB.length).toBe(1);
       expect(articlesFromDB[0]._id.toString()).toBe(articleParam._id);
       expect(articlesFromDB[0]).toEqual(
@@ -56,12 +57,56 @@ describe("Articles Tets Suite", () => {
       );
     });
 
-    it("should fail because no article sent", () => {
+    it("should create an Article successfully without tags (200)", async () => {
+      let articleToSaveWithouTag = { ...articleToSave };
+      delete articleToSaveWithouTag.tags;
+
+      const {
+        body: {
+          data: { article: articleParam },
+        },
+      } = await request(app)
+        .post(route)
+        .send({ article: articleToSaveWithouTag })
+        .expect(200);
+
+      const articlesFromDB = await Article.articles.find({}).toArray();
+
+      expect(articlesFromDB.length).toBe(1);
+      expect(articlesFromDB[0]._id.toString()).toBe(articleParam._id);
+      expect(articlesFromDB[0]).toEqual(
+        jasmine.objectContaining(articleToSaveWithouTag)
+      );
+    });
+
+    it("should fail because no article sent (422)", async () => {
       const {
         body: { message },
-      } = request(app).post(route).expect(500);
+      } = await request(app).post(route).expect(422);
 
       expect(message).toBe(NO_ARTICLE_SENT);
+    });
+
+    it("should fail because missing property (422)", async () => {
+      const {
+        body: { message },
+      } = await request(app)
+        .post(route)
+        .send({ article: { title: "title", text: "text" } })
+        .expect(422);
+
+      expect(message).toBe(CREATE_ARTICLE_WRONG_PROPERTY);
+    });
+
+    it("should fail because userId not valid (422)", async () => {
+      const {
+        body: { message },
+      } = await request(app)
+        .post(route)
+        .send({ article: { userId: 3, title: "title", text: "text" } })
+        .expect(422);
+
+      expect(message).toBe(CREATE_ARTICLE_WRONG_PROPERTY);
     });
   });
 
