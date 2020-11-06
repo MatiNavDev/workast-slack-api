@@ -25,6 +25,8 @@ const articleSaved = {
   tags: ["newSaved", "largeSaved", "tennisSaved"],
 };
 
+const unexistingId = "5fa5cdad1a1e6962df2834d9";
+
 describe("Articles Tets Suite", () => {
   beforeAll(async () => {
     await Article.init();
@@ -159,7 +161,7 @@ describe("Articles Tets Suite", () => {
       const {
         body: { message },
       } = await request(app)
-        .put(`${route}/5fa5cdad1a1e6962df2834d9`)
+        .put(`${route}/${unexistingId}`)
         .send({ article: articleSaved })
         .expect(404);
 
@@ -168,19 +170,27 @@ describe("Articles Tets Suite", () => {
   });
 
   describe("(DELETE) Delete Article Tests Suite", () => {
-    it("should delete a Article successfully (200)", async () => {
+    it("should delete an Article successfully (200)", async () => {
       await Article.articles.insertOne(articleSaved);
 
       const {
         body: {
-          data: { article },
+          data: { articleParam },
         },
       } = request(app).delete(`${route}/${randomId}`).expect(200);
 
       const articlesFromDB = await Article.articles.find({}).toArray();
 
-      expect(article.includes(randomId)).toBe(true);
+      expect(articleParam).toEqual(jasmine.objectContaining(articleSaved));
       expect(articlesFromDB.length).toBe(0);
+    });
+
+    it("should fail because article not found (404)", async () => {
+      const {
+        body: { message },
+      } = await request(app).delete(`${route}/${unexistingId}`).expect(404);
+
+      expect(message).toBe(ARTICLE_ID_NOT_FOUND);
     });
   });
 
