@@ -4,7 +4,8 @@ const { Article } = require("../db/classes");
 const { app, routeInitialText } = require("../index");
 const {
   NO_ARTICLE_SENT,
-  CREATE_ARTICLE_WRONG_PROPERTY,
+  ARTICLE_WRONG_PROPERTY,
+  ARTICLE_ID_NOT_FOUND,
 } = require("../constansts/responsesMessages/article");
 
 const route = `${routeInitialText}/articles`;
@@ -95,7 +96,7 @@ describe("Articles Tets Suite", () => {
         .send({ article: { title: "title", text: "text" } })
         .expect(422);
 
-      expect(message).toBe(CREATE_ARTICLE_WRONG_PROPERTY);
+      expect(message).toBe(ARTICLE_WRONG_PROPERTY);
     });
 
     it("should fail because userId not valid (422)", async () => {
@@ -106,36 +107,36 @@ describe("Articles Tets Suite", () => {
         .send({ article: { userId: 3, title: "title", text: "text" } })
         .expect(422);
 
-      expect(message).toBe(CREATE_ARTICLE_WRONG_PROPERTY);
+      expect(message).toBe(ARTICLE_WRONG_PROPERTY);
     });
   });
 
   describe("(PUT) Edit Article Tests Suite", () => {
     it("should edit an Article successfully (200)", async () => {
-      const articleChangedName = "articleChanged";
-      const { ops: articleSavedInDB } = await this.articles.insertOne(
-        articleSaved
-      );
+      const articleChangedTitle = "articleChanged";
+      const {
+        ops: [articleSavedInDB],
+      } = await Article.articles.insertOne(articleSaved);
 
       const {
         body: {
           data: { article: articleParam },
         },
-      } = request(app)
-        .put(`${route}/${articleSavedInDB._id.toString()}`)
-        .send({ article: { name: articleChangedName } })
+      } = await request(app)
+        .put(`${route}/${articleSavedInDB._id}`)
+        .send({ article: { ...articleSaved, title: articleChangedTitle } })
         .expect(200);
 
-      const articlesFromDB = await this.articles
-        .find({ _id: articleSavedInDB })
+      const articlesFromDB = await Article.articles
+        .find({ _id: articleSavedInDB._id })
         .toArray();
 
       expect(articlesFromDB.length).toBe(1);
-      expect(articlesFromDB[0].name).toBe(articleChangedName);
-      expect(articleParam.name).toBe(articleChangedName);
+      expect(articlesFromDB[0].title).toBe(articleChangedTitle);
+      expect(articleParam.title).toBe(articleChangedTitle);
     });
 
-    it("should fail because no data sent (422)", async () => {
+    it("should fail because no article sent (422)", async () => {
       const {
         body: { message },
       } = await request(app).put(`${route}/${randomId}`).expect(422);
@@ -143,10 +144,24 @@ describe("Articles Tets Suite", () => {
       expect(message).toBe(NO_ARTICLE_SENT);
     });
 
+    it("should fail because userId not valid (422)", async () => {
+      const {
+        body: { message },
+      } = await request(app)
+        .put(`${route}/5fa5cdad1a1e6962df2834d9`)
+        .send({ article: { ...articleSaved, userId: 3 } })
+        .expect(422);
+
+      expect(message).toBe(ARTICLE_WRONG_PROPERTY);
+    });
+
     it("should fail because article not found (404)", async () => {
       const {
         body: { message },
-      } = await request(app).put(`${route}/idNotFound`).expect(404);
+      } = await request(app)
+        .put(`${route}/5fa5cdad1a1e6962df2834d9`)
+        .send({ article: articleSaved })
+        .expect(404);
 
       expect(message).toBe(ARTICLE_ID_NOT_FOUND);
     });
@@ -154,7 +169,7 @@ describe("Articles Tets Suite", () => {
 
   describe("(DELETE) Delete Article Tests Suite", () => {
     it("should delete a Article successfully (200)", async () => {
-      await this.articles.insertOne(articleSaved);
+      await Article.articles.insertOne(articleSaved);
 
       const {
         body: {
@@ -162,7 +177,7 @@ describe("Articles Tets Suite", () => {
         },
       } = request(app).delete(`${route}/${randomId}`).expect(200);
 
-      const articlesFromDB = await this.articles.find({}).toArray();
+      const articlesFromDB = await Article.articles.find({}).toArray();
 
       expect(article.includes(randomId)).toBe(true);
       expect(articlesFromDB.length).toBe(0);
@@ -172,7 +187,7 @@ describe("Articles Tets Suite", () => {
   describe("(GET) Get all Articles Tests Suite", () => {
     it("should get all Articles successfully (200)", async () => {
       const articlesToInsert = [articleSaved, articleToSave];
-      await this.articles.insertMany(articlesToInsert);
+      await Article.articles.insertMany(articlesToInsert);
 
       const {
         body: {
@@ -192,7 +207,7 @@ describe("Articles Tets Suite", () => {
 
     it("should get one Article because tag 'new' (200)", async () => {
       const articlesToInsert = [articleSaved, articleToSave];
-      await this.articles.insertMany(articlesToInsert);
+      await Article.articles.insertMany(articlesToInsert);
       const routeWithQueryParams = `${route}?tags=new`;
 
       const {
@@ -207,7 +222,7 @@ describe("Articles Tets Suite", () => {
 
     it("should not get an article because tag 'no exists' (200)", async () => {
       const articlesToInsert = [articleSaved, articleToSave];
-      await this.articles.insertMany(articlesToInsert);
+      await Article.articles.insertMany(articlesToInsert);
       const routeWithQueryParams = encodeURI(`${route}?tags=no exists`);
 
       const {

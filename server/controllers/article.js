@@ -5,8 +5,23 @@ const {
 } = require("../helpers/responses");
 const {
   NO_ARTICLE_SENT,
-  CREATE_ARTICLE_WRONG_PROPERTY,
+  ARTICLE_WRONG_PROPERTY,
+  ARTICLE_ID_NOT_FOUND,
 } = require("../constansts/responsesMessages/article");
+const { getObjectId } = require("../db/helpers/index");
+
+const checkArticleParam = (article) => {
+  if (!article) return NO_ARTICLE_SENT;
+
+  const { userId, title, text, tags } = article;
+
+  if (
+    [userId, title, text].some((prop) => !prop) ||
+    [userId, title, text].some((prop) => typeof prop !== "string") ||
+    (tags && !Array.isArray(tags))
+  )
+    return ARTICLE_WRONG_PROPERTY;
+};
 
 /**
  * Crates a new article
@@ -15,19 +30,11 @@ const {
  */
 const createOne = async ({ body: { article } }, res) => {
   try {
-    if (!article)
-      return handleCommonError(res, { message: NO_ARTICLE_SENT, status: 422 });
+    const errorMessage = checkArticleParam(article);
+    if (errorMessage)
+      return handleCommonError(res, { message: errorMessage, status: 422 });
 
     const { userId, title, text, tags } = article;
-    if (
-      [userId, title, text].some((prop) => !prop) ||
-      [userId, title, text].some((prop) => typeof prop !== "string") ||
-      (tags && !Array.isArray(tags))
-    )
-      return handleCommonError(res, {
-        message: CREATE_ARTICLE_WRONG_PROPERTY,
-        status: 422,
-      });
 
     const articleCreated = await Article.createOne({
       userId,
@@ -35,9 +42,9 @@ const createOne = async ({ body: { article } }, res) => {
       text,
       tags,
     });
+
     handleCommonResponse(res, { article: articleCreated });
   } catch (error) {
-    console.log(error);
     handleCommonError(res, error);
   }
 };
@@ -47,9 +54,29 @@ const createOne = async ({ body: { article } }, res) => {
  * @param {*} req
  * @param {*} res
  */
-const editOne = async ({ params: { id } }, res) => {
+const editOne = async ({ params: { id }, body: { article } }, res) => {
   try {
-    handleCommonResponse(res, { article: `editOne success, id: ${id}` });
+    const errorMessage = checkArticleParam(article);
+    if (errorMessage)
+      return handleCommonError(res, { message: errorMessage, status: 422 });
+
+    const { userId, title, text, tags } = article;
+
+    const articleEdited = await Article.editOne({
+      id: getObjectId(id),
+      userId,
+      title,
+      text,
+      tags,
+    });
+
+    if (!articleEdited)
+      return handleCommonError(res, {
+        message: ARTICLE_ID_NOT_FOUND,
+        status: 404,
+      });
+
+    handleCommonResponse(res, { article: articleEdited });
   } catch (error) {
     handleCommonError(res, error);
   }

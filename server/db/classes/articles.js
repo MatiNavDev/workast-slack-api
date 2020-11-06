@@ -6,7 +6,7 @@ class Articles {
   }
 
   /**
-   * Create a single article
+   * Creates a single article
    * @param {any} article
    */
   async createOne(article) {
@@ -15,6 +15,20 @@ class Articles {
     } = await this.articles.insertOne(article);
 
     return articleCreated;
+  }
+
+  /**
+   * Edits a single article
+   * @param {any} article
+   */
+  async editOne({ id, userId, title, text, tags }) {
+    const { value: articleEdited } = await this.articles.findOneAndUpdate(
+      { _id: id },
+      { $set: { userId, title, text, tags } },
+      { returnOriginal: false }
+    );
+
+    return articleEdited;
   }
 }
 

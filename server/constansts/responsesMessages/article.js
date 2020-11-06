@@ -1,5 +1,6 @@
 module.exports = {
   NO_ARTICLE_SENT: "article param is required",
-  CREATE_ARTICLE_WRONG_PROPERTY:
+  ARTICLE_WRONG_PROPERTY:
     "userId, title and text are required and should be a string. Tags is optional and should be an array",
+  ARTICLE_ID_NOT_FOUND: "id doesn't belong to any article",
 };
