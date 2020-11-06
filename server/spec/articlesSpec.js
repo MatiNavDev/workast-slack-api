@@ -112,21 +112,43 @@ describe("Articles Tets Suite", () => {
 
   describe("(PUT) Edit Article Tests Suite", () => {
     it("should edit an Article successfully (200)", async () => {
-      await this.articles.insertOne(articleSaved);
+      const articleChangedName = "articleChanged";
+      const { ops: articleSavedInDB } = await this.articles.insertOne(
+        articleSaved
+      );
 
       const {
         body: {
           data: { article: articleParam },
         },
       } = request(app)
-        .put(`${route}/${randomId}`)
-        .send(articleToSave)
+        .put(`${route}/${articleSavedInDB._id.toString()}`)
+        .send({ article: { name: articleChangedName } })
         .expect(200);
 
-      const articlesFromDB = await this.articles.find({}).toArray();
+      const articlesFromDB = await this.articles
+        .find({ _id: articleSavedInDB })
+        .toArray();
 
       expect(articlesFromDB.length).toBe(1);
-      expect(articlesFromDB[0]).toContain(articleParam);
+      expect(articlesFromDB[0].name).toBe(articleChangedName);
+      expect(articleParam.name).toBe(articleChangedName);
+    });
+
+    it("should fail because no article sent (422)", async () => {
+      const {
+        body: { message },
+      } = await request(app).put(`${route}/${randomId}`).expect(422);
+
+      expect(message).toBe(NO_ARTICLE_SENT);
+    });
+
+    it("should fail because article not found (404)", async () => {
+      const {
+        body: { message },
+      } = await request(app).put(`${route}/idNotFound`).expect(404);
+
+      expect(message).toBe(ARTICLE_ID_NOT_FOUND);
     });
   });
 
