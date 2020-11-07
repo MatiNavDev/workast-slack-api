@@ -31,6 +31,8 @@ const articleSaved = {
 const validToken = getValidToken();
 
 describe("Articles Tets Suite", () => {
+  const slackSpy = jasmine.createSpy("slackSpy");
+
   beforeAll(async () => {
     await Article.init();
   });
@@ -44,7 +46,7 @@ describe("Articles Tets Suite", () => {
   });
 
   describe("(POST) Create Article Tests Suite ", () => {
-    it("should create an Article successfully (200)", async () => {
+    fit("should create an Article successfully (200)", async () => {
       const {
         body: {
           data: { article: articleParam },
@@ -61,6 +63,13 @@ describe("Articles Tets Suite", () => {
       expect(articlesFromDB[0]._id.toString()).toBe(articleParam._id);
       expect(articlesFromDB[0]).toEqual(
         jasmine.objectContaining(articleToSave)
+      );
+      expect(slackSpy.calls.all()[0].args[0]).toBe(slackToken);
+      expect(slackSpy.calls.all()[1].args[0][0]).toEqual(
+        jasmine.objectContaining({
+          channel: "#general",
+          text: articleToSave.text,
+        })
       );
     });
 
