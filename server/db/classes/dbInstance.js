@@ -23,6 +23,10 @@ class DBInstance {
     }
   }
 
+  /**
+   * Get specific collection
+   * @param {string} collection
+   */
   async getCollection(collection) {
     await this.init();
     return this.db.collection(collection);

@@ -31,6 +31,10 @@ class Articles {
     return articleEdited;
   }
 
+  /**
+   * Deletes an article with id sent
+   * @param {any} param
+   */
   async deleteOne({ id }) {
     const { value: articleDeleted } = await this.articles.findOneAndDelete({
       _id: id,
@@ -38,6 +42,10 @@ class Articles {
     return articleDeleted;
   }
 
+  /**
+   * Get all articles with specific tags. If any sent, returns all articles
+   * @param {*} tags
+   */
   getAll(tags) {
     const query = tags.length ? { tags: { $in: tags } } : {};
     return this.articles.find(query).toArray();

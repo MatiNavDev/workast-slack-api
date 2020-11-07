@@ -22,6 +22,9 @@ app.use(`${routeInitialText}/articles`, articleRoutes);
 
 const PORT = process.env.PORT || 3007;
 
+/**
+ * Init app and DB
+ */
 const init = async () => {
   await initDb();
   if (process.env.NODE_ENV === "prod")
