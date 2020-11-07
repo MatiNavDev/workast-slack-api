@@ -7,11 +7,25 @@ const {
   CREATE_USER_WRONG_PROPERTY,
 } = require("../constansts/responsesMessages/user");
 
+const {
+  NO_TOKEN,
+  INVALID_TOKEN,
+} = require("../constansts/responsesMessages/middlewares");
+
 const route = `${routeInitialText}/users`;
 const userToSave = {
   name: "name",
   avatar: "avatar",
 };
+
+const validToken = jwt.sign(
+  {
+    data: "you are a valid user :)",
+  },
+  jwtSecret,
+  { expiresIn: "1h" }
+);
+const invalidToken = validToken.slice(3, validToken.length) + "abcd";
 
 describe("Users Tets Suite", () => {
   beforeAll(async () => {
@@ -32,7 +46,11 @@ describe("Users Tets Suite", () => {
         body: {
           data: { user: userParam },
         },
-      } = await request(app).post(route).send({ user: userToSave }).expect(200);
+      } = await request(app)
+        .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
+        .send({ user: userToSave })
+        .expect(200);
       const usersFromDB = await User.users.find({}).toArray();
 
       expect(usersFromDB.length).toBe(1);
@@ -43,7 +61,10 @@ describe("Users Tets Suite", () => {
     it("should fail because no user sent (422)", async () => {
       const {
         body: { message },
-      } = await request(app).post(route).expect(422);
+      } = await request(app)
+        .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(422);
 
       expect(message).toBe(NO_USER_SENT);
     });
@@ -53,10 +74,43 @@ describe("Users Tets Suite", () => {
         body: { message },
       } = await request(app)
         .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ user: { name: "name" } })
         .expect(422);
 
       expect(message).toBe(CREATE_USER_WRONG_PROPERTY);
     });
   });
+
+  using(
+    [
+      {
+        name: "Create One User",
+        method: "post",
+        route,
+      },
+    ],
+    (data) => {
+      describe(`Authentication Test ${data.name}`, () => {
+        it("should not validate successfully because no token (401)", async () => {
+          const {
+            body: { message },
+          } = await request(app)[data.method](`${data.route}`).expect(401);
+
+          expect(message).toBe(NO_TOKEN);
+        });
+
+        it("should not validate successfully because no token (401)", async () => {
+          const {
+            body: { message },
+          } = await request(app)
+            [data.method](`${data.route}`)
+            .set("Authorization", `Bearer ${invalidToken}`)
+            .expect(401);
+
+          expect(message).toBe(INVALID_TOKEN);
+        });
+      });
+    }
+  );
 });
