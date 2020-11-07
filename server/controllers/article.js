@@ -110,9 +110,12 @@ const deleteOne = async ({ params: { id } }, res) => {
  * @param {*} req
  * @param {*} res
  */
-const getAll = async (req, res) => {
+const getAll = async ({ query: { tags } }, res) => {
   try {
-    handleCommonResponse(res, { article: "getAll success" });
+    const tagsArray = tags ? tags.split(",") : [];
+    const articles = await Article.getAll(tagsArray);
+
+    handleCommonResponse(res, { article: articles });
   } catch (error) {
     handleCommonError(res, error);
   }

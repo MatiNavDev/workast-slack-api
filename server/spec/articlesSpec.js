@@ -198,43 +198,53 @@ describe("Articles Tets Suite", () => {
   });
 
   describe("(GET) Get all Articles Tests Suite", () => {
-    it("should get all Articles successfully (200)", async () => {
-      const articlesToInsert = [articleSaved, articleToSave];
-      await Article.articles.insertMany(articlesToInsert);
+    beforeEach(async () => {
+      this.articlesToInsertWithoutId = [articleSaved, articleToSave];
+      await Article.articles.insertMany([
+        { ...articleSaved },
+        { ...articleToSave },
+      ]);
+    });
 
+    it("should get all Articles successfully (200)", async () => {
       const {
         body: {
-          data: { article: articles },
+          data: { article: articlesParam },
         },
-      } = request(app).get(routeWithQueryParams).expect(200);
+      } = await request(app).get(route).expect(200);
 
-      expect(article.length).toBe(2);
-      articlesToInsert.forEach((art) => {
+      expect(articlesParam.length).toBe(2);
+      this.articlesToInsertWithoutId.forEach((art) => {
         expect(
-          articles.find(
+          articlesParam.find(
             ({ userId: userIdFromDB }) => userIdFromDB === art.userId
           )
-        ).toContain(art);
+        ).toEqual(jasmine.objectContaining(art));
       });
     });
 
     it("should get one Article because tag 'new' (200)", async () => {
-      const articlesToInsert = [articleSaved, articleToSave];
-      await Article.articles.insertMany(articlesToInsert);
-      const routeWithQueryParams = `${route}?tags=new`;
+      const routeWithQueryParams = encodeURI(`${route}?tags=new`);
 
       const {
         body: {
-          data: { article: articles },
+          data: { article: articlesParam },
         },
-      } = request(app).get(routeWithQueryParams).expect(200);
+      } = await request(app).get(routeWithQueryParams).expect(200);
 
-      expect(article.length).toBe(1);
-      expect(articles).toContain(articlesToInsert[0]);
+      expect(articlesParam.length).toBe(1);
+      expect(articlesParam).toContain(
+        jasmine.objectContaining(
+          this.articlesToInsertWithoutId.find(({ tags }) =>
+            tags.includes("new")
+          )
+        )
+      );
     });
 
     it("should not get an article because tag 'no exists' (200)", async () => {
-      const articlesToInsert = [articleSaved, articleToSave];
+      const articlesToInsert = [{ ...articleSaved }, { ...articleToSave }];
+      const articlesToInsertWithoutId = [articleSaved, articleToSave];
       await Article.articles.insertMany(articlesToInsert);
       const routeWithQueryParams = encodeURI(`${route}?tags=no exists`);
 
@@ -242,7 +252,7 @@ describe("Articles Tets Suite", () => {
         body: {
           data: { article: articles },
         },
-      } = request(app).get(routeWithQueryParams).expect(200);
+      } = await request(app).get(routeWithQueryParams).expect(200);
 
       expect(articles.length).toBe(0);
     });

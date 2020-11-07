@@ -37,6 +37,11 @@ class Articles {
     });
     return articleDeleted;
   }
+
+  getAll(tags) {
+    const query = tags.length ? { tags: { $in: tags } } : {};
+    return this.articles.find(query).toArray();
+  }
 }
 
 module.exports = new Articles();
