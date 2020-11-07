@@ -1,4 +1,4 @@
-const DBInstance = require("../db");
+const DBInstance = require("../db/classes/dbInstance");
 
 describe("Verify Connection to DB Test Suite", () => {
   beforeAll(async () => {
