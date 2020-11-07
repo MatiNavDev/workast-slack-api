@@ -1,15 +1,19 @@
 const request = require("supertest");
+const using = require("jasmine-data-provider");
 
 const { Article } = require("../db/classes");
 const { app, routeInitialText } = require("../index");
+const { getValidToken } = require("../helpers/token");
 const {
   NO_ARTICLE_SENT,
   ARTICLE_WRONG_PROPERTY,
   ARTICLE_ID_NOT_FOUND,
-} = require("../constansts/responsesMessages/article");
+} = require("../constants/responsesMessages/article");
+const { invalidTokenTest, noTokenTest } = require("./asserts/middleware");
 
 const route = `${routeInitialText}/articles`;
 const randomId = "someRandomId";
+const unexistingId = "5fa5cdad1a1e6962df2834d9";
 
 const articleToSave = {
   userId: "userId",
@@ -17,7 +21,6 @@ const articleToSave = {
   text: "text",
   tags: ["new", "large", "tennis"],
 };
-
 const articleSaved = {
   userId: "userIdSaved",
   title: "titleSaved",
@@ -25,7 +28,7 @@ const articleSaved = {
   tags: ["newSaved", "largeSaved", "tennisSaved"],
 };
 
-const unexistingId = "5fa5cdad1a1e6962df2834d9";
+const validToken = getValidToken();
 
 describe("Articles Tets Suite", () => {
   beforeAll(async () => {
@@ -48,6 +51,7 @@ describe("Articles Tets Suite", () => {
         },
       } = await request(app)
         .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ article: articleToSave })
         .expect(200);
 
@@ -70,6 +74,7 @@ describe("Articles Tets Suite", () => {
         },
       } = await request(app)
         .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ article: articleToSaveWithouTag })
         .expect(200);
 
@@ -85,7 +90,10 @@ describe("Articles Tets Suite", () => {
     it("should fail because no article sent (422)", async () => {
       const {
         body: { message },
-      } = await request(app).post(route).expect(422);
+      } = await request(app)
+        .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(422);
 
       expect(message).toBe(NO_ARTICLE_SENT);
     });
@@ -95,6 +103,7 @@ describe("Articles Tets Suite", () => {
         body: { message },
       } = await request(app)
         .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ article: { title: "title", text: "text" } })
         .expect(422);
 
@@ -106,6 +115,7 @@ describe("Articles Tets Suite", () => {
         body: { message },
       } = await request(app)
         .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ article: { userId: 3, title: "title", text: "text" } })
         .expect(422);
 
@@ -126,6 +136,7 @@ describe("Articles Tets Suite", () => {
         },
       } = await request(app)
         .put(`${route}/${articleSavedInDB._id}`)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ article: { ...articleSaved, title: articleChangedTitle } })
         .expect(200);
 
@@ -141,7 +152,10 @@ describe("Articles Tets Suite", () => {
     it("should fail because no article sent (422)", async () => {
       const {
         body: { message },
-      } = await request(app).put(`${route}/${randomId}`).expect(422);
+      } = await request(app)
+        .put(`${route}/${randomId}`)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(422);
 
       expect(message).toBe(NO_ARTICLE_SENT);
     });
@@ -151,6 +165,7 @@ describe("Articles Tets Suite", () => {
         body: { message },
       } = await request(app)
         .put(`${route}/5fa5cdad1a1e6962df2834d9`)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ article: { ...articleSaved, userId: 3 } })
         .expect(422);
 
@@ -162,6 +177,7 @@ describe("Articles Tets Suite", () => {
         body: { message },
       } = await request(app)
         .put(`${route}/${unexistingId}`)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ article: articleSaved })
         .expect(404);
 
@@ -181,6 +197,7 @@ describe("Articles Tets Suite", () => {
         },
       } = await request(app)
         .delete(`${route}/${articleSavedInDB._id}`)
+        .set("Authorization", `Bearer ${validToken}`)
         .expect(200);
 
       const articlesFromDB = await Article.articles.find({}).toArray();
@@ -191,7 +208,10 @@ describe("Articles Tets Suite", () => {
     it("should fail because article not found (404)", async () => {
       const {
         body: { message },
-      } = await request(app).delete(`${route}/${unexistingId}`).expect(404);
+      } = await request(app)
+        .delete(`${route}/${unexistingId}`)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(404);
 
       expect(message).toBe(ARTICLE_ID_NOT_FOUND);
     });
@@ -211,7 +231,10 @@ describe("Articles Tets Suite", () => {
         body: {
           data: { article: articlesParam },
         },
-      } = await request(app).get(route).expect(200);
+      } = await request(app)
+        .get(route)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(200);
 
       expect(articlesParam.length).toBe(2);
       this.articlesToInsertWithoutId.forEach((art) => {
@@ -230,7 +253,10 @@ describe("Articles Tets Suite", () => {
         body: {
           data: { article: articlesParam },
         },
-      } = await request(app).get(routeWithQueryParams).expect(200);
+      } = await request(app)
+        .get(routeWithQueryParams)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(200);
 
       expect(articlesParam.length).toBe(1);
       expect(articlesParam).toContain(
@@ -244,7 +270,6 @@ describe("Articles Tets Suite", () => {
 
     it("should not get an article because tag 'no exists' (200)", async () => {
       const articlesToInsert = [{ ...articleSaved }, { ...articleToSave }];
-      const articlesToInsertWithoutId = [articleSaved, articleToSave];
       await Article.articles.insertMany(articlesToInsert);
       const routeWithQueryParams = encodeURI(`${route}?tags=no exists`);
 
@@ -252,9 +277,48 @@ describe("Articles Tets Suite", () => {
         body: {
           data: { article: articles },
         },
-      } = await request(app).get(routeWithQueryParams).expect(200);
+      } = await request(app)
+        .get(routeWithQueryParams)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(200);
 
       expect(articles.length).toBe(0);
     });
   });
+
+  using(
+    [
+      {
+        name: "Create One Article",
+        method: "post",
+        route,
+      },
+      {
+        name: "Edit One Article",
+        method: "put",
+        route: `${route}/someId`,
+      },
+      {
+        name: "Delete One Article",
+        method: "delete",
+        route: `${route}/someId`,
+      },
+      {
+        name: "Get All Articles",
+        method: "get",
+        route,
+      },
+    ],
+    (data) => {
+      describe(`Authentication Test ${data.name}`, () => {
+        it("should not validate successfully because no token (401)", async () => {
+          await noTokenTest(data.method, data.route);
+        });
+
+        it("should not validate successfully because no token (401)", async () => {
+          await invalidTokenTest(data.method, data.route);
+        });
+      });
+    }
+  );
 });

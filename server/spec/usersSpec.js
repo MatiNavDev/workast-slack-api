@@ -1,17 +1,22 @@
 const request = require("supertest");
+const using = require("jasmine-data-provider");
 
 const { User } = require("../db/classes");
 const { app, routeInitialText } = require("../index");
+const { getValidToken } = require("../helpers/token");
 const {
   NO_USER_SENT,
   CREATE_USER_WRONG_PROPERTY,
-} = require("../constansts/responsesMessages/user");
+} = require("../constants/responsesMessages/user");
+const { invalidTokenTest, noTokenTest } = require("./asserts/middleware");
 
 const route = `${routeInitialText}/users`;
 const userToSave = {
   name: "name",
   avatar: "avatar",
 };
+
+const validToken = getValidToken();
 
 describe("Users Tets Suite", () => {
   beforeAll(async () => {
@@ -32,7 +37,11 @@ describe("Users Tets Suite", () => {
         body: {
           data: { user: userParam },
         },
-      } = await request(app).post(route).send({ user: userToSave }).expect(200);
+      } = await request(app)
+        .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
+        .send({ user: userToSave })
+        .expect(200);
       const usersFromDB = await User.users.find({}).toArray();
 
       expect(usersFromDB.length).toBe(1);
@@ -43,7 +52,10 @@ describe("Users Tets Suite", () => {
     it("should fail because no user sent (422)", async () => {
       const {
         body: { message },
-      } = await request(app).post(route).expect(422);
+      } = await request(app)
+        .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(422);
 
       expect(message).toBe(NO_USER_SENT);
     });
@@ -53,10 +65,32 @@ describe("Users Tets Suite", () => {
         body: { message },
       } = await request(app)
         .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
         .send({ user: { name: "name" } })
         .expect(422);
 
       expect(message).toBe(CREATE_USER_WRONG_PROPERTY);
     });
   });
+
+  using(
+    [
+      {
+        name: "Create One User",
+        method: "post",
+        route,
+      },
+    ],
+    (data) => {
+      describe(`Authentication Test ${data.name}`, () => {
+        it("should not validate successfully because no token (401)", async () => {
+          await noTokenTest(data.method, data.route);
+        });
+
+        it("should not validate successfully because no token (401)", async () => {
+          await invalidTokenTest(data.method, data.route);
+        });
+      });
+    }
+  );
 });
