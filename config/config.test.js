@@ -2,7 +2,7 @@ require("dotenv").config();
 
 module.exports = {
   jwt: {
-    secret: process.env.SECRET,
+    secret: process.env.JWT_SECRET,
   },
   mongo: {
     url: process.env.DB_URL_SPEC,

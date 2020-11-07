@@ -7,7 +7,7 @@ const {
   NO_ARTICLE_SENT,
   ARTICLE_WRONG_PROPERTY,
   ARTICLE_ID_NOT_FOUND,
-} = require("../constansts/responsesMessages/article");
+} = require("../constants/responsesMessages/article");
 const { getObjectId } = require("../db/helpers/index");
 
 const checkArticleParam = (article) => {

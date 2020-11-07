@@ -3,20 +3,17 @@ const using = require("jasmine-data-provider");
 
 const { Article } = require("../db/classes");
 const { app, routeInitialText } = require("../index");
-
+const { getValidToken } = require("../helpers/token");
 const {
   NO_ARTICLE_SENT,
   ARTICLE_WRONG_PROPERTY,
   ARTICLE_ID_NOT_FOUND,
-} = require("../constansts/responsesMessages/article");
-
-const {
-  NO_TOKEN,
-  INVALID_TOKEN,
-} = require("../constansts/responsesMessages/middlewares");
+} = require("../constants/responsesMessages/article");
+const { invalidTokenTest, noTokenTest } = require("./asserts/middleware");
 
 const route = `${routeInitialText}/articles`;
 const randomId = "someRandomId";
+const unexistingId = "5fa5cdad1a1e6962df2834d9";
 
 const articleToSave = {
   userId: "userId",
@@ -24,7 +21,6 @@ const articleToSave = {
   text: "text",
   tags: ["new", "large", "tennis"],
 };
-
 const articleSaved = {
   userId: "userIdSaved",
   title: "titleSaved",
@@ -32,16 +28,7 @@ const articleSaved = {
   tags: ["newSaved", "largeSaved", "tennisSaved"],
 };
 
-const validToken = jwt.sign(
-  {
-    data: "you are a valid user :)",
-  },
-  jwtSecret,
-  { expiresIn: "1h" }
-);
-const invalidToken = validToken.slice(3, validToken.length) + "abcd";
-
-const unexistingId = "5fa5cdad1a1e6962df2834d9";
+const validToken = getValidToken();
 
 describe("Articles Tets Suite", () => {
   beforeAll(async () => {
@@ -103,7 +90,10 @@ describe("Articles Tets Suite", () => {
     it("should fail because no article sent (422)", async () => {
       const {
         body: { message },
-      } = await request(app).post(route).expect(422);
+      } = await request(app)
+        .post(route)
+        .set("Authorization", `Bearer ${validToken}`)
+        .expect(422);
 
       expect(message).toBe(NO_ARTICLE_SENT);
     });
@@ -322,22 +312,11 @@ describe("Articles Tets Suite", () => {
     (data) => {
       describe(`Authentication Test ${data.name}`, () => {
         it("should not validate successfully because no token (401)", async () => {
-          const {
-            body: { message },
-          } = await request(app)[data.method](`${data.route}`).expect(401);
-
-          expect(message).toBe(NO_TOKEN);
+          await noTokenTest(data.method, data.route);
         });
 
         it("should not validate successfully because no token (401)", async () => {
-          const {
-            body: { message },
-          } = await request(app)
-            [data.method](`${data.route}`)
-            .set("Authorization", `Bearer ${invalidToken}`)
-            .expect(401);
-
-          expect(message).toBe(INVALID_TOKEN);
+          await invalidTokenTest(data.method, data.route);
         });
       });
     }

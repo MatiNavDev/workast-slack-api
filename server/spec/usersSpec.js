@@ -1,16 +1,14 @@
 const request = require("supertest");
+const using = require("jasmine-data-provider");
 
 const { User } = require("../db/classes");
 const { app, routeInitialText } = require("../index");
+const { getValidToken } = require("../helpers/token");
 const {
   NO_USER_SENT,
   CREATE_USER_WRONG_PROPERTY,
-} = require("../constansts/responsesMessages/user");
-
-const {
-  NO_TOKEN,
-  INVALID_TOKEN,
-} = require("../constansts/responsesMessages/middlewares");
+} = require("../constants/responsesMessages/user");
+const { invalidTokenTest, noTokenTest } = require("./asserts/middleware");
 
 const route = `${routeInitialText}/users`;
 const userToSave = {
@@ -18,14 +16,7 @@ const userToSave = {
   avatar: "avatar",
 };
 
-const validToken = jwt.sign(
-  {
-    data: "you are a valid user :)",
-  },
-  jwtSecret,
-  { expiresIn: "1h" }
-);
-const invalidToken = validToken.slice(3, validToken.length) + "abcd";
+const validToken = getValidToken();
 
 describe("Users Tets Suite", () => {
   beforeAll(async () => {
@@ -93,22 +84,11 @@ describe("Users Tets Suite", () => {
     (data) => {
       describe(`Authentication Test ${data.name}`, () => {
         it("should not validate successfully because no token (401)", async () => {
-          const {
-            body: { message },
-          } = await request(app)[data.method](`${data.route}`).expect(401);
-
-          expect(message).toBe(NO_TOKEN);
+          await noTokenTest(data.method, data.route);
         });
 
         it("should not validate successfully because no token (401)", async () => {
-          const {
-            body: { message },
-          } = await request(app)
-            [data.method](`${data.route}`)
-            .set("Authorization", `Bearer ${invalidToken}`)
-            .expect(401);
-
-          expect(message).toBe(INVALID_TOKEN);
+          await invalidTokenTest(data.method, data.route);
         });
       });
     }
