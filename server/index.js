@@ -24,9 +24,10 @@ const PORT = process.env.PORT || 3007;
 
 const init = async () => {
   await initDb();
-  app.listen(PORT, () =>
-    console.log(`Workast project running in port: ${PORT}`)
-  );
+  if (process.env.NODE_ENV === "prod")
+    app.listen(PORT, () =>
+      console.log(`Workast project running in port: ${PORT}`)
+    );
 };
 
 init();
