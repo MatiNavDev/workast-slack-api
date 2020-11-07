@@ -23,9 +23,9 @@ class DBInstance {
     }
   }
 
-  async getCollection() {
+  async getCollection(collection) {
     await this.init();
-    return this.db.collection("users");
+    return this.db.collection(collection);
   }
 }
 
