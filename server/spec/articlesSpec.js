@@ -1,15 +1,18 @@
 const request = require("supertest");
 const using = require("jasmine-data-provider");
+const mock = require("mock-require");
 
-const { Article } = require("../db/classes");
+const { Article, User } = require("../db/classes");
 const { app, routeInitialText } = require("../index");
 const { getValidToken } = require("../helpers/token");
+const { invalidTokenTest, noTokenTest } = require("./asserts/middleware");
+const { slackTest } = require("./asserts/slack");
+const { createOneSpy } = require("./mockers/slack");
 const {
   NO_ARTICLE_SENT,
   ARTICLE_WRONG_PROPERTY,
   ARTICLE_ID_NOT_FOUND,
 } = require("../constants/responsesMessages/article");
-const { invalidTokenTest, noTokenTest } = require("./asserts/middleware");
 
 const route = `${routeInitialText}/articles`;
 const randomId = "someRandomId";
@@ -30,9 +33,14 @@ const articleSaved = {
 
 const validToken = getValidToken();
 
+const userToSave = {
+  name: "name",
+  avatar: "avatar",
+};
+
 describe("Articles Tets Suite", () => {
   beforeAll(async () => {
-    await Article.init();
+    await Promise.all([Article, User].map((Class) => Class.init()));
   });
 
   beforeEach(async () => {
@@ -40,10 +48,31 @@ describe("Articles Tets Suite", () => {
   });
 
   afterAll(async () => {
+    mock.stopAll();
     await Article.articles.deleteMany({});
   });
 
   describe("(POST) Create Article Tests Suite ", () => {
+    beforeAll(async () => {
+      await Promise.all([Article, User].map((Class) => Class.init()));
+      this.userSaved = await User.createOne(userToSave);
+      this.articleToSaveWithRealUserId = {
+        ...articleToSave,
+        userId: this.userSaved._id,
+      };
+    });
+
+    beforeEach(async () => {
+      await Article.articles.deleteMany({});
+    });
+
+    afterAll(async () => {
+      createOneSpy.calls.reset();
+      await Promise.all(
+        [Article.articles, User.users].map((col) => col.deleteMany({}))
+      );
+    });
+
     it("should create an Article successfully (200)", async () => {
       const {
         body: {
@@ -52,20 +81,19 @@ describe("Articles Tets Suite", () => {
       } = await request(app)
         .post(route)
         .set("Authorization", `Bearer ${validToken}`)
-        .send({ article: articleToSave })
+        .send({ article: this.articleToSaveWithRealUserId })
         .expect(200);
 
       const articlesFromDB = await Article.articles.find({}).toArray();
 
       expect(articlesFromDB.length).toBe(1);
       expect(articlesFromDB[0]._id.toString()).toBe(articleParam._id);
-      expect(articlesFromDB[0]).toEqual(
-        jasmine.objectContaining(articleToSave)
-      );
+
+      slackTest(createOneSpy, this.userSaved, this.articleToSaveWithRealUserId);
     });
 
     it("should create an Article successfully without tags (200)", async () => {
-      let articleToSaveWithouTag = { ...articleToSave };
+      let articleToSaveWithouTag = { ...this.articleToSaveWithRealUserId };
       delete articleToSaveWithouTag.tags;
 
       const {
@@ -79,12 +107,16 @@ describe("Articles Tets Suite", () => {
         .expect(200);
 
       const articlesFromDB = await Article.articles.find({}).toArray();
+      const { title, text, tags } = articlesFromDB[0];
+      const { title: titleNotTag, text: textNotTag } = articleToSaveWithouTag;
 
       expect(articlesFromDB.length).toBe(1);
       expect(articlesFromDB[0]._id.toString()).toBe(articleParam._id);
-      expect(articlesFromDB[0]).toEqual(
-        jasmine.objectContaining(articleToSaveWithouTag)
+      expect({ title, text, tags }).toEqual(
+        jasmine.objectContaining({ title: titleNotTag, text: textNotTag })
       );
+      expect(tags).toBe(null);
+      slackTest(createOneSpy, this.userSaved, articleToSaveWithouTag);
     });
 
     it("should fail because no article sent (422)", async () => {

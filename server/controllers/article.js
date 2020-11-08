@@ -1,4 +1,4 @@
-const Article = require("../db/classes/articles");
+const { Article, User } = require("../db/classes/");
 const {
   handleCommonError,
   handleCommonResponse,
@@ -9,6 +9,7 @@ const {
   ARTICLE_ID_NOT_FOUND,
 } = require("../constants/responsesMessages/article");
 const { getObjectId } = require("../db/helpers/index");
+const Slack = require("../integrations/slack");
 
 const checkArticleParam = (article) => {
   if (!article) return NO_ARTICLE_SENT;
@@ -36,12 +37,28 @@ const createOne = async ({ body: { article } }, res) => {
 
     const { userId, title, text, tags } = article;
 
-    const articleCreated = await Article.createOne({
+    const newArticlePromise = Article.createOne({
       userId,
       title,
       text,
       tags,
     });
+
+    const getUserNamePromise = User.getUserById(getObjectId(userId), {
+      projection: {
+        _id: 0,
+        name: 1,
+      },
+    });
+
+    const [articleCreated, { name }] = await Promise.all([
+      newArticlePromise,
+      getUserNamePromise,
+    ]);
+
+    await Slack.sendMessageToGeneralChannel(
+      `${name} has a new post: ${text}. Check it out!!`
+    );
 
     handleCommonResponse(res, { article: articleCreated });
   } catch (error) {
