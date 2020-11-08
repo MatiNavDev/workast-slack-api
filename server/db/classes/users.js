@@ -16,6 +16,14 @@ class Users {
 
     return userCreated;
   }
+  /**
+   * Get a user looking for specific id
+   * @param {any} user
+   */
+  async getUserById(id, options = {}) {
+    const userCreated = await this.users.findOne({ _id: id }, options);
+    return userCreated;
+  }
 }
 
 module.exports = new Users();

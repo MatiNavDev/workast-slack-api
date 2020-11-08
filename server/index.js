@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const { initDb } = require("./db/helpers");
 const userRoutes = require("./routes/user");
 const articleRoutes = require("./routes/article");
+const Slack = require("./integrations/slack");
 
 const routeInitialText = "/workast-api/v1";
 
@@ -27,10 +28,12 @@ const PORT = process.env.PORT || 3007;
  */
 const init = async () => {
   await initDb();
-  if (process.env.NODE_ENV === "prod")
+  if (process.env.NODE_ENV === "prod") {
     app.listen(PORT, () =>
       console.log(`Workast project running in port: ${PORT}`)
     );
+    Slack.init();
+  }
 };
 
 init();
@@ -38,4 +41,5 @@ init();
 module.exports = {
   app,
   routeInitialText,
+  init,
 };
