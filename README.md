@@ -8,11 +8,11 @@ This project is an API REST integrated with Slack API. The main purpose is to au
 
 ## Flow
 
-mainRoute = "http://localhost:3007/workast-api/v1"
+mainRoute = `http://localhost:3007/workast-api/v1`
 
 ### Steps
 
-1.  (POST) Create new user. Route: `${mainRoute}/users`. Required fields: `name, avatar`
+1.  (POST) Create a new user. Route: `${mainRoute}/users`. Required fields: `name, avatar`
 2.  (POST) Create a new article. Include the user's `_id` returned in previous step. Route: `${mainRoute}/articles`. Required fields: `userId, title, text`. Optional fields: `tags`
 3.  Check your _#general_ channel! there must be a new message with article's `text` and user `name`
 4.  (PUT) Edit your article. Remember that it's a `PUT` and not a `PATCH` so you must send a complete new body. Route: `${mainRoute}/articles/<articleId>`. Required fields: `userId, title, text`. Optional fields: `tags`
@@ -35,23 +35,25 @@ The project was designed following an **iterative and inremental** methodology w
 
 ### Git Flow
 
-The git flow chosen was feature branch workflow following that every iteration must have a specific branch with specific tests. When it was finished, it submits by a _Pull Request_ simulating that other partner must approval to allow branch merge
+The git flow chosen was feature branch workflow following that every iteration must have a specific branch with specific tests. When it was finished, it submits a _Pull Request_ simulating that other partner must approval to allow branch merge
 
 ### TDD
 
-The Project was developed following the TDD paradigm where all tests must be defined first and after that the code must be writed to accomplish the green in tests. It produced a bit more of overwork because all feature branches must had their own testbut it allowed to accomplish the right requirements plus write only neccessary code in an effective way
+The Project was developed following the TDD paradigm where all tests must be defined first and after that the code must be writed to accomplish the green in tests. It produced a bit more of work because all feature branches must had their own test but it allowed to accomplish the right requirements plus write only neccessary code in an effective way
 
 ## Slack Integration
 
-To achieve [Step](#Step) 3. the project includes an integration with Slack API.
-On One hand, it consists of making a Slack application, add it to a workspace and to _#general_ channel and give that application `chat:write` permissions.
-On the other Hand that integration includes **Unit** and **Integration** tests. Firstone only test funtionality and the other test an entire flow (it is developed in [articlesSpec->createOneSpec.js](https://github.com/MatiNavDev/workast-slack-api/blob/master/server/spec/articlesSpec/createOneSpec.js))
+To achieve [Step](#Steps) 3. the project includes an integration with Slack API.
+
+On One hand, it includes a flow to integrate that funtionality in `articles->createOne` Controller.
+
+On the other Hand that integration includes **Unit** and **Integration** tests. Firstone only test funtionality and the other the full createOne flow (it is developed in [articlesSpec->createOneSpec.js](https://github.com/MatiNavDev/workast-slack-api/blob/master/server/spec/articlesSpec/createOneSpec.js))
 
 ## Auth Middleware
 
-The application includes a simple auth middleware in all requests. It only verifies that the actual request includes a **json web token** with with `JWT_SECRET` enviroment var.
+The application includes a simple auth middleware in all requests. It only verifies that the actual request includes a **json web token** with `JWT_SECRET` enviroment var.
 
-## Design Patterns
+## Design Patterns
 
 - Responses: for the request responses it includes a simple **Strategy** that depending on response type it sends a `successfull` or `error` response
 - DB Connection: to connect only one time to `DB` and maintaing active that connection in app life cicle it was developed using a **Singleton**
@@ -71,7 +73,7 @@ The application includes a simple auth middleware in all requests. It only verif
 
 1. Run `node server/`
 2. [Create a jwt](https://jwt.io/) with `JWT_SECRET` enviroment var and include this header `{Authorization: Bearer <jwt_generated>}` for all requests
-3. Follow [Steps](#Step) guide!
+3. Follow [Steps](#Steps) guide!
 
 ---
 
