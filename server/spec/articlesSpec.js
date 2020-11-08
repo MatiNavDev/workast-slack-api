@@ -68,7 +68,6 @@ describe("Articles Tets Suite", () => {
 
     afterAll(async () => {
       createOneSpy.calls.reset();
-      console.log(process.env.NODE_ENV);
       await Promise.all(
         [Article.articles, User.users].map((col) => col.deleteMany({}))
       );

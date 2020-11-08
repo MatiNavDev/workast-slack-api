@@ -24,12 +24,10 @@ describe("Users Tets Suite", () => {
   });
 
   beforeEach(async () => {
-    console.log(process.env.NODE_ENV);
     await User.users.deleteMany({});
   });
 
   afterAll(async () => {
-    console.log(process.env.NODE_ENV);
     await User.users.deleteMany({});
   });
 
