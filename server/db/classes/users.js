@@ -1,6 +1,9 @@
 const DBInstance = require("./dbInstance");
 
 class Users {
+  /**
+   * Init users collectiom
+   */
   async init() {
     this.users = await DBInstance.getCollection("users");
   }

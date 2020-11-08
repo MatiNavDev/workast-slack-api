@@ -5,6 +5,12 @@ const {
   NO_TOKEN,
 } = require("../constants/responsesMessages/middlewares");
 
+/**
+ * Validate Bearer Token
+ * @param {any} req
+ * @param {any} res
+ * @param {any} next
+ */
 async function authMiddleware({ headers: { authorization } }, res, next) {
   try {
     const token = authorization;

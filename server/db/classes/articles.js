@@ -1,6 +1,9 @@
 const DBInstance = require("./dbInstance");
 
 class Articles {
+  /**
+   * Init articles collection
+   */
   async init() {
     this.articles = await DBInstance.getCollection("articles");
   }
